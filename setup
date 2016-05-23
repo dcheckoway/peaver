@@ -1,0 +1,94 @@
+#! /usr/bin/env python2
+
+import getpass, hashlib, os, re, subprocess
+from lib.config import Config
+from lib.plex import PlexClient
+
+def input_with_default(prompt, default_value):
+    return raw_input('{0}: [{1}] '.format(prompt, default_value)) or default_value
+
+# Try to auto-detect the HDHomeRun tuner, expecting output like:
+# hdhomerun device 10515716 found at 192.168.0.201
+print 'Attempting to discover the HDHomeRun device...'
+output = subprocess.check_output(['hdhomerun_config', 'discover']).rstrip()
+m = re.search('^hdhomerun device \S+ found at (.+)$', output)
+if m:
+    print output
+    hdhr_ip = m.group(1)
+    hdhr_ip = input_with_default('HDHomeRun IP', hdhr_ip)
+else:
+    hdhr_ip = None
+    while not hdhr_ip:
+        hdhr_ip = raw_input('HDHomeRun IP: ')
+        
+default_hdhr_recording_port = '5004'
+default_hdhr_transcode_profile = 'heavy'
+hdhr_recording_port = input_with_default('HDHomeRun recording port', default_hdhr_recording_port)
+hdhr_transcode_profile = input_with_default('HDHomeRun transcode profile', default_hdhr_transcode_profile)
+
+# Get the Plex config (section ID, section name, media directory)
+default_plex_base_url = 'http://localhost:32400'
+plex_base_url = input_with_default('Plex Base URL', default_plex_base_url)
+
+sections = PlexClient(plex_base_url).library_sections()
+while True:
+    print 'Available Plex sections:'
+    for id, section in sorted(sections.iteritems()):
+        print '{0}: {1}'.format(id, section['name'])
+    section_id = raw_input('Enter the section ID where you want recordings published: ')
+    if section_id in sections:
+        section = sections[section_id]
+        break
+    else:
+        print 'Invalid section ID, try again...'
+
+default_media_dir = section['paths'][0]
+media_dir = input_with_default('Destination directory for saved recordings', default_media_dir)
+
+# Prompt for Schedules Direct credentials
+schedules_direct_username = schedules_direct_password_digest = None
+while not schedules_direct_username:
+    schedules_direct_username = raw_input('Enter your Schedules Direct username: ')
+while not schedules_direct_password_digest:
+    schedules_direct_password_digest = hashlib.sha1(getpass.getpass('Enter your Schedules Direct password: ')).hexdigest()
+
+# Prompt for PostgreSQL connection config
+default_db_host = 'localhost'
+default_db_name = 'peaver'
+db_host = input_with_default('Database host', default_db_host)
+db_user = raw_input('Database user: ')
+db_password = getpass.getpass('Database password: ')
+db_name = input_with_default('Database name', default_db_name)
+
+# Prompt for DVR preferences
+default_start_early_sec = '30'
+default_end_late_sec = '60'
+default_recording_script_dir = '/tmp/peaver'
+start_early_sec = input_with_default('Start recordings early by (sec)', default_start_early_sec)
+end_late_sec = input_with_default('End recordings late by (sec)', default_end_late_sec)
+recording_script_dir = input_with_default('Recording script directory', default_recording_script_dir)
+
+# Write the config file
+config = Config()
+config.add_section('hdhomerun')
+config.set('hdhomerun', 'ip', hdhr_ip)
+config.set('hdhomerun', 'recording_port', hdhr_recording_port)
+config.set('hdhomerun', 'transcode_profile', hdhr_transcode_profile)
+config.add_section('database')
+config.set('database', 'host', db_host)
+config.set('database', 'user', db_user)
+config.set('database', 'password', db_password)
+config.set('database', 'name', db_name)
+config.add_section('plex')
+config.set('plex', 'base_url', plex_base_url)
+config.set('plex', 'section_id', section_id)
+config.set('plex', 'section_name', section['name'])
+config.set('plex', 'media_dir', media_dir)
+config.add_section('schedules_direct')
+config.set('schedules_direct', 'username', schedules_direct_username)
+config.set('schedules_direct', 'password_digest', schedules_direct_password_digest)
+config.add_section('dvr')
+config.set('dvr', 'start_early_sec', start_early_sec)
+config.set('dvr', 'end_late_sec', end_late_sec)
+config.set('dvr', 'recording_script_dir', recording_script_dir)
+config.save()

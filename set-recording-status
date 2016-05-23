@@ -1,0 +1,15 @@
+#! /usr/bin/env python2
+
+import sys
+from lib.config import Config
+from lib.dvr import DVR
+
+if len(sys.argv) < 3:
+    print >> sys.stderr, 'Usage: {0} <recording_id> <status>'.format(sys.argv[0])
+    sys.exit(1)
+
+recording_id = int(sys.argv[1])
+status = sys.argv[2]
+
+if not DVR().set_recording_status(recording_id, status):
+    raise Exception('Recording {0} status not updated'.format(recording_id))

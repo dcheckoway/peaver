@@ -1,0 +1,11 @@
+#! /usr/bin/env python2
+
+from lib.config import Config
+from lib.schedules import SchedulesDirectAPI
+from lib.updater import Updater
+
+config = Config()
+config.load()
+api = SchedulesDirectAPI(config)
+updater = Updater(api, config)
+updater.run()

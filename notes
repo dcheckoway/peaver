@@ -1,0 +1,123 @@
+- clean up scripts that were already run
+  - self delete?
+
+https://docs.python.org/2/library/threading.html#timer-objects
+
+- setup:
+  - mark active stations
+  - setup plex station
+
+https://support.plex.tv/hc/en-us/articles/201638786-Plex-Media-Server-URL-Commands
+
+47304|WLEXDT|NBC|39|18.1
+47306|WLEXDT2|METVN|39|18.2
+30468|WKYTDT|CBS|36|27.1
+44275|WKYTDT2|CW|36|27.2
+30303|WTVQDT|ABC|40|36.1
+49712|WTVQDT2|MNT|40|36.2
+62920|WTVQDT3|ANTENNA|40|36.3
+99444|WTVQDT4|LAFF|40|36.4
+29020|WKLEDT|PBS|42|46.1
+30509|WKLEDT2|PBS|42|46.2
+30550|WKLEDT3||42|46.3
+32693|WDKYDT|FOX|31|56.1
+50829|WDKYDT2|COMET|31|56.2
+91409|WDKYDT3|GRIT|31|56.3
+
+UPDATE station SET active = TRUE WHERE id IN ('47304', '47306', '30468', '44275', '30303', '49712', '62920', '99444', '29020', '30509', '30550', '32693', '50829', '91409');
+INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('The Bachelorette', TRUE, CURRENT_TIMESTAMP);
+INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('Shark Tank', TRUE, CURRENT_TIMESTAMP);
+INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('Penn & Teller: Fool Us', TRUE, CURRENT_TIMESTAMP);
+INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('U.S. Olympic Trials', TRUE, CURRENT_TIMESTAMP);
+
+-- search step 1: find matching program titles
+SELECT DISTINCT program.title FROM program JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id WHERE station.active AND plainto_tsquery('english', 'fool us') @@ program.tsv ORDER BY program.title;
+
+-- search step 2: find air times & details for a given program title
+SELECT station_program.id, station_program.air_date_time, station_program.new, program.long_description, program.cast_list, program.venue, program.teams, program.season, program.episode, lineup_station.channel, lineup_station.atsc, station.affiliate, station.name, station.city FROM program JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id JOIN lineup_station ON lineup_station.station_id = station.id WHERE station.active AND program.title = 'Shark Tank' AND station_program.air_date_time > CURRENT_TIMESTAMP ORDER BY station_program.air_date_time;
+
+
+-- season pass upcoming recording scheduler
+SELECT season_pass.id as season_pass_id, program.title, station_program.id as station_program_id, station_program.air_date_time
+FROM season_pass
+JOIN program ON program.title = season_pass.program_title
+JOIN station_program ON station_program.program_id = program.id
+JOIN station ON station.id = station_program.station_id
+WHERE station.active
+AND station_program.air_date_time > CURRENT_TIMESTAMP
+ORDER BY station_program.air_date_time;
+
+-- step 3: set it up to record
+- one time (by station_program) or season pass (by title)
+  - detect existing season pass
+
+
+
+
+UPDATE station SET active = 1 WHERE id IN (47304, 47306, 30468, 44275, 30303, 49712, 62920, 99444, 29020, 30509, 30550, 32693, 50829, 91409);
+
+-- search step 1: find matching program titles
+SELECT distinct program.title FROM program_search JOIN program ON program.id = program_search.id JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id WHERE station.active AND program_search.title MATCH 'nova' ORDER BY station_program.air_date_time;
+
+-- search step 2: find air times & details for a given program title
+SELECT station_program.id, station_program.air_date_time, station_program.new, program.long_description, program.cast, program.venue, program.teams, program.season, program.episode, lineup_station.channel, lineup_station.atsc, station.affiliate, station.name, station.city FROM program JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id JOIN lineup_station ON lineup_station.station_id = station.id WHERE station.active AND program.title = 'NOVA' AND station_program.air_date_time > CURRENT_TIMESTAMP ORDER BY station_program.air_date_time;
+
+
+SELECT station_program.air_date_time, program.title, program.description, lineup_station.channel, lineup_station.atsc, station.affiliate, station.name, station.city FROM program JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id JOIN lineup_station ON lineup_station.station_id = station.id WHERE station.active AND program.title like '%bachelorette%' ORDER BY station_program.air_date_time;
+
+SELECT station_program.air_date_time, station_program.new, program.title, program.long_description, program.cast, program.venue, program.teams, program.season, program.episode, lineup_station.channel, lineup_station.atsc, station.affiliate, station.name, station.city
+from program_search
+join program on program.id = program_search.id
+join station_program on station_program.program_id = program.id
+join station on station.id = station_program.station_id
+join lineup_station on lineup_station.station_id = station.id
+where station.active
+and program_search.title MATCH 'company'
+ORDER BY station_program.air_date_time;
+
+https://support.plex.tv/hc/en-us/articles/200381053-Naming-Date-based-TV-Shows
+
+
+# get the channel lineup
+curl 'http://192.168.0.136/lineup.json'| jq .
+
+# capture the video
+curl 'http://192.168.0.136:5004/auto/v18.1?duration=120&transcode=heavy' > Test.S01E01.m4v
+
+# capture.ts to plex-worthy.m4v (NOT NECESSARY)
+ffmpeg -i capture.ts -map 0:0 -map 0:1 -map 0:1 -c:v copy -c:a:0 aac -strict -2 -b:a 192k -ac 2 -scodec copy -c:a:1 copy Test.S01E01.m4v
+
+
+
+import subprocess
+
+p = subprocess.Popen(["curl", "-s", "-o", "/tmp/foo.log", "http://www.checkoway.com"])
+print 'pid={0}'.format(p.pid)
+
+import os, re, subprocess
+plex_media_server_root = '/Applications/Plex Media Server.app'
+if not os.path.isdir(plex_media_server_root):
+    raise Exception('Plex Media Server must be installed')
+
+plex_media_scanner = '{0}/Contents/MacOS/Plex Media Scanner'.format(plex_media_server_root)
+if not os.path.isfile(plex_media_scanner):
+    raise Exception('Plex Media Scanner not found')
+
+section_list = subprocess.check_output([plex_media_scanner, '--list']).rstrip()
+section_dict = dict([m.group(1, 2) for m in (re.search('^(\d+):\s*(.+)$', line.strip()) for line in section_list.split(os.linesep)) if m])
+while True:
+    print 'Available Plex sections:'
+    print section_list
+    section = str(input('Please enter a section ID: '))
+    if section in section_dict:
+        print 'Selected Plex section: {0}'.format(section_dict[section])
+        break
+    else:
+        print 'Invalid section ID, try again...'
+
+
+print 'pid={0}'.format(p.pid)
+
+
+
+/Applications/Plex\ Media\ Server.app/Contents/MacOS/Plex\ Media\ Scanner --refresh --scan --section %s
