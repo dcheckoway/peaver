@@ -86,7 +86,8 @@ class DVR(DatabaseClient):
             logger.info('Creating recording log file directory: {0}'.format(recording_log_file_dir))
             os.makedirs(recording_log_file_dir)
         logger.info('Invoking recording script: {0}'.format(script_path))
-        subprocess.Popen([script_path])
+        # Ensure that the child process is detached from our process group
+        subprocess.Popen([script_path], preexec_fn=os.setpgrp)
 
     def set_recording_status(self, recording_id, status):
         logger.info('Updating recording {0} status to {1}'.format(recording_id, status))
