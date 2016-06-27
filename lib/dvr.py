@@ -24,6 +24,7 @@ class DVR(DatabaseClient):
         self.start_early_sec = int(config.get('dvr', 'start_early_sec'))
         self.end_late_sec = int(config.get('dvr', 'end_late_sec'))
         self.recording_script_dir = config.get('dvr', 'recording_script_dir')
+        self.recording_log_file = config.get('dvr', 'recording_log_file')
         self.set_recording_status_script_path = os.path.realpath(os.path.join(os.path.dirname(__file__), '../set-recording-status'))
         self.refresh_plex_section_script_path = os.path.realpath(os.path.join(os.path.dirname(__file__), '../refresh-plex-section'))
         DatabaseClient.__init__(self, config)
@@ -65,7 +66,8 @@ class DVR(DatabaseClient):
         media_path_dir = os.path.dirname(media_path)
         logger.info('Writing recording script: {0}'.format(script_path))
         with open(script_path, 'wb') as f:
-            print >> f, '#! /bin/bash -e'
+            print >> f, '#! /bin/bash -x'
+            print >> f, 'exec > {0} 2>&1'.format(self.recording_log_file)
             print >> f, '{0} {1} recording'.format(self.set_recording_status_script_path, recording_id)
             print >> f, 'mkdir -p \'{0}\''.format(media_path_dir.replace('\'', '\'\\\'\''))
             print >> f, 'curl -s \'{0}\' > \'{1}\''.format(capture_url, media_path.replace('\'', '\'\\\'\''))
@@ -79,9 +81,14 @@ class DVR(DatabaseClient):
         return 'http://{0}:{1}/auto/v{2}?transcode={3}&duration={4}'.format(self.hdhr_ip, self.hdhr_port, atsc, self.hdhr_profile, duration_sec)
 
     def invoke_script(self, script_path):
+        recording_log_file_dir = os.path.dirname(self.recording_log_file)
+        if not os.path.exists(recording_log_file_dir):
+            logger.info('Creating recording log file directory: {0}'.format(recording_log_file_dir))
+            os.makedirs(recording_log_file_dir)
         logger.info('Invoking recording script: {0}'.format(script_path))
         subprocess.Popen([script_path])
 
     def set_recording_status(self, recording_id, status):
+        logger.info('Updating recording {0} status to {1}'.format(recording_id, status))
         self.execute('UPDATE recording SET status = %s WHERE id = %s', [status, recording_id])
         return self.rowcount() == 1
