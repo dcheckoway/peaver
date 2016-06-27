@@ -199,7 +199,7 @@ class Updater(DatabaseClient):
 
     def reconcile_season_pass_recordings(self):
         logger.info('Reconciling season pass recordings')
-        self.execute('DELETE FROM recording USING season_pass, station_program, program WHERE recording.status = \'scheduled\' AND season_pass.id = recording.season_pass_id AND station_program.id = recording.station_program_id AND program.id = station_program.program_id AND program.title != season_pass.program_title')
+        self.execute('DELETE FROM recording USING season_pass, station_program, program WHERE recording.status IN (\'pending\',\'scheduled\') AND season_pass.id = recording.season_pass_id AND station_program.id = recording.station_program_id AND program.id = station_program.program_id AND program.title != season_pass.program_title')
         logger.info('Rows deleted: {0}'.format(self.rowcount()))
         self.execute('SELECT season_pass.id as season_pass_id, station_program.id as station_program_id, station_program.air_date_time, station_program.program_id FROM season_pass JOIN program ON program.title = season_pass.program_title JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id WHERE station.active AND station_program.air_date_time > CURRENT_TIMESTAMP AND (station_program.new OR NOT season_pass.new_only) AND NOT EXISTS (SELECT 1 FROM recording WHERE station_program_id = station_program.id) ORDER BY station_program.air_date_time')
         for row in self.fetchall():
@@ -214,7 +214,7 @@ class Updater(DatabaseClient):
                 program = self.fetchone()
                 media_path = self.dvr.dest_file(program, air_date_time)
                 logger.info('Scheduling \'{0}\' at {1}'.format(program.title, air_date_time))
-                self.execute('INSERT INTO recording (status, station_program_id, season_pass_id, media_path) VALUES (\'scheduled\', %s, %s, %s)',
+                self.execute('INSERT INTO recording (status, station_program_id, season_pass_id, media_path) VALUES (\'pending\', %s, %s, %s)',
                              [station_program_id, season_pass_id, media_path])
 
     def purge_old_data(self):
