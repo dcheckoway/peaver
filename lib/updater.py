@@ -195,7 +195,7 @@ class Updater(DatabaseClient):
         logger.info('Reconciling season pass recordings')
         self.execute('DELETE FROM recording USING season_pass, station_program, program WHERE recording.status IN (\'pending\',\'scheduled\') AND season_pass.id = recording.season_pass_id AND station_program.id = recording.station_program_id AND program.id = station_program.program_id AND program.title != season_pass.program_title')
         logger.info('Rows deleted: {0}'.format(self.rowcount()))
-        self.execute('SELECT season_pass.id as season_pass_id, station_program.id as station_program_id, station_program.air_date_time, station_program.program_id FROM season_pass JOIN program ON program.title = season_pass.program_title JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id WHERE station.active AND station_program.air_date_time > CURRENT_TIMESTAMP AND (station_program.new OR NOT season_pass.new_only) AND NOT EXISTS (SELECT 1 FROM recording WHERE station_program_id = station_program.id) ORDER BY station_program.air_date_time')
+        self.execute('SELECT season_pass.id as season_pass_id, station_program.id as station_program_id, station_program.air_date_time, station_program.program_id FROM season_pass JOIN program ON program.title = season_pass.program_title JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id WHERE station.active AND station_program.air_date_time > CURRENT_TIMESTAMP AND (station_program.new OR NOT season_pass.new_only) AND NOT EXISTS (SELECT 1 FROM recording WHERE station_program_id = station_program.id) ORDER BY station_program.air_date_time, season_pass.priority, season_pass.id')
         for row in self.fetchall():
             # This is necessary to avoid duplicate recordings
             program_id = row.program_id
@@ -206,10 +206,16 @@ class Updater(DatabaseClient):
                 air_date_time = row.air_date_time
                 self.execute('SELECT * FROM program WHERE id = %s', [program_id])
                 program = self.fetchone()
-                media_path = self.dvr.dest_file(program, air_date_time)
-                logger.info('Scheduling \'{0}\' at {1}'.format(program.title, air_date_time))
-                self.execute('INSERT INTO recording (status, station_program_id, season_pass_id, media_path) VALUES (\'pending\', %s, %s, %s)',
-                             [station_program_id, season_pass_id, media_path])
+                # Deconflict with existing recordings (TODO: manual takes precedence)
+                self.execute('SELECT program.title FROM recording JOIN station_program ON station_program.id = recording.station_program_id JOIN program ON program.id = station_program.program_id WHERE station_program.air_date_time <= %s AND station_program.air_date_time + (station_program.duration||\' seconds \')::interval > %s', [air_date_time, air_date_time])
+                conflict = self.fetchone()
+                if conflict:
+                    logger.warning('CONFLICT: Cannot schedule {0} at {1}, conflicts with {2}'.format(program.title, air_date_time, conflict.title))
+                else:
+                    media_path = self.dvr.dest_file(program, air_date_time)
+                    logger.info('Scheduling \'{0}\' at {1}'.format(program.title, air_date_time))
+                    self.execute('INSERT INTO recording (status, station_program_id, season_pass_id, media_path) VALUES (\'pending\', %s, %s, %s)',
+                                 [station_program_id, season_pass_id, media_path])
 
     def purge_old_data(self):
         logger.info('Purging old station_program entries')

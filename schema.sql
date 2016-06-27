@@ -79,7 +79,8 @@ CREATE TABLE season_pass (
   id SERIAL PRIMARY KEY,
   program_title VARCHAR(255) NOT NULL,
   new_only BOOLEAN NOT NULL,
-  created_at TIMESTAMP NOT NULL
+  priority SMALLINT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE UNIQUE INDEX season_pass_unq ON season_pass (program_title);
 

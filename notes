@@ -1,7 +1,4 @@
 - add & remove season pass (reconcile recordings)
-- conflict detection
-- tuner management
-
 
 
 - show recordings:
@@ -30,14 +27,12 @@ https://support.plex.tv/hc/en-us/articles/201638786-Plex-Media-Server-URL-Comman
 50829|WDKYDT2|COMET|31|56.2
 91409|WDKYDT3|GRIT|31|56.3
 
-UPDATE station SET active = FALSE;
 UPDATE station SET active = TRUE FROM lineup_station WHERE lineup_station.station_id = station.id AND lineup_station.atsc IN ('18.1', '18.2', '27.1', '27.2', '36.1', '36.2', '36.3', '36.4', '52.1', '52.2', '52.3', '56.1', '56.2', '56.3');
-
-INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('The Bachelorette', TRUE, CURRENT_TIMESTAMP);
-INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('Shark Tank', TRUE, CURRENT_TIMESTAMP);
-INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('Penn & Teller: Fool Us', TRUE, CURRENT_TIMESTAMP);
-INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('U.S. Olympic Trials', TRUE, CURRENT_TIMESTAMP);
-INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('NOVA', FALSE, CURRENT_TIMESTAMP);
+INSERT INTO season_pass (program_title, new_only, priority) VALUES ('The Bachelorette', TRUE, 0);
+INSERT INTO season_pass (program_title, new_only, priority) VALUES ('Shark Tank', TRUE, 0);
+INSERT INTO season_pass (program_title, new_only, priority) VALUES ('Penn & Teller: Fool Us', TRUE, 0);
+INSERT INTO season_pass (program_title, new_only, priority) VALUES ('U.S. Olympic Trials', TRUE, 5);
+INSERT INTO season_pass (program_title, new_only, priority) VALUES ('NOVA', FALSE, 0);
 
 -- search step 1: find matching program titles
 SELECT DISTINCT program.title FROM program JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id WHERE station.active AND plainto_tsquery('english', 'fool us') @@ program.tsv ORDER BY program.title;

@@ -6,9 +6,9 @@ from lib.schedules import SchedulesDirectAPI
 from lib.updater import Updater
 
 parser = argparse.ArgumentParser(description='Update the database')
-parser.add_argument('-s', '--no-schedules', dest='schedules', action='store_false', help='Skip schedule updates')
+parser.add_argument('-r', '--no-schedules', dest='schedules', action='store_false', help='Skip schedule updates')
 parser.set_defaults(schedules=True)
-parser.add_argument('-r', '--no-reconcile', dest='reconcile', action='store_false', help='Skip season pass reconciliation')
+parser.add_argument('-s', '--no-reconcile', dest='reconcile', action='store_false', help='Skip season pass reconciliation')
 parser.set_defaults(reconcile=True)
 args = parser.parse_args()
 
