@@ -5,7 +5,7 @@
 
 
 - show recordings:
-select station_program.air_date_time, station_program.duration, recording.id, recording.status, recording.media_path from recording join station_program on station_program.id = recording.station_program_id order by station_program.air_date_time;
+select recording.id, recording.status, station_program.air_date_time, station_program.duration, recording.media_path from recording join station_program on station_program.id = recording.station_program_id order by station_program.air_date_time;
 
 https://docs.python.org/2/library/threading.html#timer-objects
 
@@ -38,7 +38,6 @@ INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('Shark Tan
 INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('Penn & Teller: Fool Us', TRUE, CURRENT_TIMESTAMP);
 INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('U.S. Olympic Trials', TRUE, CURRENT_TIMESTAMP);
 INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('NOVA', FALSE, CURRENT_TIMESTAMP);
-INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('Match Game', FALSE, CURRENT_TIMESTAMP);
 
 -- search step 1: find matching program titles
 SELECT DISTINCT program.title FROM program JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id WHERE station.active AND plainto_tsquery('english', 'fool us') @@ program.tsv ORDER BY program.title;

@@ -19,16 +19,10 @@ class Updater(DatabaseClient):
         self.dvr = DVR(config)
         DatabaseClient.__init__(self, config)
 
-    def run(self):
-        logger.info('Updater is running')
-        self.connect()
+    def update_schedules(self):
         self.api.ensure_online()
         self.load_lineups()
         self.reconcile_schedules()
-        self.reconcile_season_pass_recordings()
-        self.purge_old_data()
-        self.close()
-        logger.info('Updater is done')
 
     def load_lineups(self):
         logger.info('Loading lineups')
