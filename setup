@@ -64,9 +64,11 @@ db_name = input_with_default('Database name', default_db_name)
 default_start_early_sec = '30'
 default_end_late_sec = '60'
 default_recording_script_dir = '/tmp/peaver'
+default_recording_log_file = '/tmp/peaver/recordings.log'
 start_early_sec = input_with_default('Start recordings early by (sec)', default_start_early_sec)
 end_late_sec = input_with_default('End recordings late by (sec)', default_end_late_sec)
 recording_script_dir = input_with_default('Recording script directory', default_recording_script_dir)
+recording_log_file = input_with_default('Recording log file', default_recording_log_file)
 
 # Write the config file
 config = Config()
@@ -91,4 +93,5 @@ config.add_section('dvr')
 config.set('dvr', 'start_early_sec', start_early_sec)
 config.set('dvr', 'end_late_sec', end_late_sec)
 config.set('dvr', 'recording_script_dir', recording_script_dir)
+config.set('dvr', 'recording_log_file', recording_log_file)
 config.save()

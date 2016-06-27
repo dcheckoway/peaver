@@ -1,5 +1,12 @@
-import requests
+import logging, requests
 from xml.etree import ElementTree
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+ch = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
 class PlexException(Exception):
     def __init__(self, *args, **kwargs):
@@ -32,6 +39,7 @@ class PlexClient():
         return sections
 
     def refresh_section(self, section_id):
+        logger.info('Refreshing Plex section {0}'.format(section_id))
         response = requests.get('{0}/library/sections/{1}/refresh'.format(self.base_url, section_id))
         if response.status_code != 200:
             raise PlexRefreshError(section_id, response.status_code)
