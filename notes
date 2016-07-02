@@ -1,14 +1,10 @@
-- clean up scripts that were already run
-  - self delete?
-
-- only schedule the given program once
-- conflict detection
-- tuner management
-
+- skip/recording override
+- delete recordings (delete media file + Plex rescan)
+- add & remove season pass (reconcile recordings)
 
 
 - show recordings:
-select station_program.air_date_time, station_program.duration, recording.id, recording.status, recording.media_path from recording join station_program on station_program.id = recording.station_program_id order by station_program.air_date_time;
+select recording.id, recording.status, station_program.air_date_time, station_program.duration, recording.media_path from recording join station_program on station_program.id = recording.station_program_id order by station_program.air_date_time;
 
 https://docs.python.org/2/library/threading.html#timer-objects
 
@@ -18,28 +14,14 @@ https://docs.python.org/2/library/threading.html#timer-objects
 
 https://support.plex.tv/hc/en-us/articles/201638786-Plex-Media-Server-URL-Commands
 
-47304|WLEXDT|NBC|39|18.1
-47306|WLEXDT2|METVN|39|18.2
-30468|WKYTDT|CBS|36|27.1
-44275|WKYTDT2|CW|36|27.2
-30303|WTVQDT|ABC|40|36.1
-49712|WTVQDT2|MNT|40|36.2
-62920|WTVQDT3|ANTENNA|40|36.3
-99444|WTVQDT4|LAFF|40|36.4
-29020|WKLEDT|PBS|42|46.1
-30509|WKLEDT2|PBS|42|46.2
-30550|WKLEDT3||42|46.3
-32693|WDKYDT|FOX|31|56.1
-50829|WDKYDT2|COMET|31|56.2
-91409|WDKYDT3|GRIT|31|56.3
-
-UPDATE station SET active = TRUE WHERE id IN ('47304', '47306', '30468', '44275', '30303', '49712', '62920', '99444', '29020', '30509', '30550', '32693', '50829', '91409');
-INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('The Bachelorette', TRUE, CURRENT_TIMESTAMP);
-INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('Shark Tank', TRUE, CURRENT_TIMESTAMP);
-INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('Penn & Teller: Fool Us', TRUE, CURRENT_TIMESTAMP);
-INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('U.S. Olympic Trials', TRUE, CURRENT_TIMESTAMP);
-INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('NOVA', FALSE, CURRENT_TIMESTAMP);
-INSERT INTO season_pass (program_title, new_only, created_at) VALUES ('Match Game', FALSE, CURRENT_TIMESTAMP);
+UPDATE station SET active = TRUE FROM lineup_station WHERE lineup_station.station_id = station.id AND lineup_station.atsc IN ('18.1', '18.2', '27.1', '27.2', '36.1', '36.2', '36.3', '36.4', '52.1', '52.2', '52.3', '56.1', '56.2', '56.3');
+INSERT INTO season_pass (program_title, new_only, priority) VALUES ('The Bachelorette', TRUE, 0);
+INSERT INTO season_pass (program_title, new_only, priority) VALUES ('Shark Tank', TRUE, 0);
+INSERT INTO season_pass (program_title, new_only, priority) VALUES ('Penn & Teller: Fool Us', TRUE, 0);
+INSERT INTO season_pass (program_title, new_only, priority) VALUES ('NOVA', FALSE, 0);
+INSERT INTO season_pass (program_title, new_only, priority) VALUES ('The Bachelor', TRUE, 0);
+INSERT INTO season_pass (program_title, new_only, priority) VALUES ('Bachelor in Paradise', TRUE, 0);
+INSERT INTO season_pass (program_title, new_only, priority) VALUES ('Grey''s Anatomy', TRUE, 0);
 
 -- search step 1: find matching program titles
 SELECT DISTINCT program.title FROM program JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id WHERE station.active AND plainto_tsquery('english', 'fool us') @@ program.tsv ORDER BY program.title;
@@ -63,6 +45,20 @@ ORDER BY station_program.air_date_time;
   - detect existing season pass
 
 
+47304|WLEXDT|NBC|39|18.1
+47306|WLEXDT2|METVN|39|18.2
+30468|WKYTDT|CBS|36|27.1
+44275|WKYTDT2|CW|36|27.2
+30303|WTVQDT|ABC|40|36.1
+49712|WTVQDT2|MNT|40|36.2
+62920|WTVQDT3|ANTENNA|40|36.3
+99444|WTVQDT4|LAFF|40|36.4
+29020|WKLEDT|PBS|42|46.1
+30509|WKLEDT2|PBS|42|46.2
+30550|WKLEDT3||42|46.3
+32693|WDKYDT|FOX|31|56.1
+50829|WDKYDT2|COMET|31|56.2
+91409|WDKYDT3|GRIT|31|56.3
 
 
 UPDATE station SET active = 1 WHERE id IN (47304, 47306, 30468, 44275, 30303, 49712, 62920, 99444, 29020, 30509, 30550, 32693, 50829, 91409);

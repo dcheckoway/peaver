@@ -1,11 +1,23 @@
 #! /usr/bin/env python2
 
+import argparse
 from lib.config import Config
 from lib.schedules import SchedulesDirectAPI
 from lib.updater import Updater
+
+parser = argparse.ArgumentParser(description='Update the database')
+parser.add_argument('-r', '--no-schedules', dest='schedules', action='store_false', help='Skip schedule updates')
+parser.set_defaults(schedules=True)
+parser.add_argument('-s', '--no-reconcile', dest='reconcile', action='store_false', help='Skip season pass reconciliation')
+parser.set_defaults(reconcile=True)
+args = parser.parse_args()
 
 config = Config()
 config.load()
 api = SchedulesDirectAPI(config)
 updater = Updater(api, config)
-updater.run()
+if args.schedules:
+    updater.update_schedules()
+if args.reconcile:
+    updater.reconcile_season_pass_recordings()
+updater.purge_old_data()

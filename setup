@@ -11,15 +11,14 @@ def input_with_default(prompt, default_value):
 # hdhomerun device 10515716 found at 192.168.0.201
 print 'Attempting to discover the HDHomeRun device...'
 output = subprocess.check_output(['hdhomerun_config', 'discover']).rstrip()
-m = re.search('^hdhomerun device \S+ found at (.+)$', output)
-if m:
-    print output
-    hdhr_ip = m.group(1)
-    hdhr_ip = input_with_default('HDHomeRun IP', hdhr_ip)
-else:
-    hdhr_ip = None
-    while not hdhr_ip:
-        hdhr_ip = raw_input('HDHomeRun IP: ')
+m = re.search('^hdhomerun device (\S+) found at (.+)$', output)
+if not m:
+    raise Exception('HDHomeRun device could not be discovered')
+print output
+hdhr_device_id = m.group(1)
+hdhr_ip = m.group(2)
+hdhr_device_id = input_with_default('HDHomeRun device ID', hdhr_device_id)
+hdhr_ip = input_with_default('HDHomeRun IP address', hdhr_ip)
         
 default_hdhr_recording_port = '5004'
 default_hdhr_transcode_profile = 'heavy'
@@ -73,6 +72,7 @@ recording_log_file = input_with_default('Recording log file', default_recording_
 # Write the config file
 config = Config()
 config.add_section('hdhomerun')
+config.set('hdhomerun', 'device_id', hdhr_device_id)
 config.set('hdhomerun', 'ip', hdhr_ip)
 config.set('hdhomerun', 'recording_port', hdhr_recording_port)
 config.set('hdhomerun', 'transcode_profile', hdhr_transcode_profile)

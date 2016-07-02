@@ -4,7 +4,7 @@ https://en.wikipedia.org/wiki/Personal_video_recorder
 
 ## Prerequisites
 
-- HDHomeRun Tuner (tested with HDHomeRun EXTEND)
+- HDHomeRun Tuner (tested with HDHomeRun EXTEND HDTC-2US)
 - Plex Media Server (https://www.plex.tv)
 - Python
 - PostgreSQL
