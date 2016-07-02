@@ -1,0 +1,96 @@
+<html>
+<head>
+<title>Peaver</title>
+</head>
+<style type="text/css">
+.bold { font-weight: bold; }
+.center { text-align: center; }
+.bgRed { background-color: red }
+.bgYellow { background-color: yellow }
+.bgGreen { background-color: green }
+table#recordings {
+    border: 0;
+}
+td.recording {
+    font-family: Arial;
+    font-size: 12px;
+    border: 0;
+}
+.circle {
+    width: 14px;
+    height: 14px;
+    -webkit-border-radius: 20px;
+    -moz-border-radius: 20px;
+    border-radius: 20px;
+    border: 1px solid #888;
+}
+.newMark {
+    width: 28px;
+    height: 14px;
+    border-radius: 20px;
+    font-family: Arial;
+    font-size: 9px;
+    font-weight: bold;
+    color: #000;
+    line-height: 14px;
+    text-align: center;
+    background: #0F0;
+    border: 1px solid #888;
+}
+</style>
+<script src="https://code.jquery.com/jquery-3.0.0.min.js"
+        integrity="sha256-JmvOoLtYsmqlsWxa7mDSLMwa6dZ9rrIdtrrVYRnDRH0="
+		crossorigin="anonymous"></script>
+<script src="http://stevenlevithan.com/assets/misc/date.format.js"></script>
+<body>
+<table id="recordings"><tbody/></table>
+</body>
+<script>
+function recordingClass(recordingStatus) {
+    switch (recordingStatus) {
+    case 'ready':
+        return 'circle bgGreen'
+    case 'recording':
+        return 'circle bgRed'
+    default:
+        return ''
+    }
+}
+function seasonEp(recording) {
+    if (recording.program.season && recording.program.episode) {
+        return 'S' + twoDigit(recording.program.season) + 'E' + twoDigit(recording.program.episode)
+    } else {
+        return null
+    }
+}
+function twoDigit(v) {
+    return v < 10 ? ('0' + v) : v
+}
+function shortDesc(recording) {
+    se = seasonEp(recording)
+    if (se) {
+        return se
+    } else if (recording.program.episode_title) {
+        return recording.program.episode_title
+    } else {
+        return 'N/A'
+    }
+}
+$(document).ready(function(){
+    $.getJSON("recordings", function(data, status) {
+        $.each(data, function(idx, recording) {
+            $("#recordings tbody").append(
+                '<tr>' +
+                    '<td class="recording"><div class="' + recordingClass(recording.status) + '"/></td>' +
+                    '<td class="recording center">' + dateFormat(recording.air_date_time, "m/d") + '</td>' +
+                    '<td class="recording center">' + dateFormat(recording.air_date_time, "h:MMt") + '</td>' +
+                    '<td class="recording bold">' + recording.program.title + '</td>' +
+                    '<td class="recording"><div class="' + (recording.new ? "newMark" : "repeatMark") + '"/></td>' +
+                    '<td class="recording">' + shortDesc(recording) + '</td>' +
+                    '</tr>')
+            $(".newMark").html('<span>NEW</span>')
+        })
+    })
+})
+</script>
+</html>
