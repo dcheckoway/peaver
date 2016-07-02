@@ -1,3 +1,5 @@
 *.pyc
 config
 *.egg-info
+pyramid.log
+logs
