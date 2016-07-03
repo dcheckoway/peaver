@@ -5,6 +5,7 @@
 </head>
 <style type="text/css">
 .bold { font-weight: bold; }
+.italic { font-style: italic; }
 .center { text-align: center; }
 .bgRed { background-color: red }
 .bgYellow { background-color: yellow }
@@ -25,6 +26,11 @@ table#seasonPasses {
     border: 0;
 }
 td.seasonPass {
+    font-family: Arial;
+    font-size: 12px;
+    border: 0;
+}
+td.searchResult {
     font-family: Arial;
     font-size: 12px;
     border: 0;
@@ -63,9 +69,10 @@ td.seasonPass {
 <h4>Season Passes</h4>
 <table id="seasonPasses"><tbody/></table>
 
-<h4>Program Search</h4>
+<h4>Add a Season Pass</h4>
 <input id="searchText" type="text" placeholder=""/>
-<input id="searchButton" type="button" value="Go"/>
+<input id="searchButton" type="button" value="Search"/>
+<table id="searchResults"><tbody/></table>
 
 </body>
 <script>
@@ -79,6 +86,7 @@ function recordingClass(recordingStatus) {
         return ''
     }
 }
+
 function seasonEp(recording) {
     if (recording.program.season && recording.program.episode) {
         return 'S' + twoDigit(recording.program.season) + 'E' + twoDigit(recording.program.episode)
@@ -86,9 +94,11 @@ function seasonEp(recording) {
         return null
     }
 }
+
 function twoDigit(v) {
     return v < 10 ? ('0' + v) : v
 }
+
 function shortDesc(recording) {
     se = seasonEp(recording)
     if (se) {
@@ -99,8 +109,21 @@ function shortDesc(recording) {
         return 'N/A'
     }
 }
-$(document).ready(function(){
+
+function addSeasonPass(title) {
+    $.getJSON("add_season_pass", { 'title': title })
+        .done(function(seasonPass) {
+            alert('Added season pass for ' + seasonPass.program_title + '.')
+            loadSeasonPasses()
+        })
+        .fail(function(jqxhr, status, error) {
+            alert('Failed to add season pass, status=' + status + ', error=' + error)
+        })
+}
+
+function loadRecordings() {
     $.getJSON("recordings", function(data, status) {
+        $("#recordings tbody").html("")
         $.each(data, function(idx, recording) {
             $("#recordings tbody").append(
                 '<tr>' +
@@ -114,7 +137,11 @@ $(document).ready(function(){
             $(".newMark").html('<span>NEW</span>')
         })
     })
+}
+
+function loadSeasonPasses() {
     $.getJSON("season_passes", function(data, status) {
+        $("#seasonPasses tbody").html("")
         $.each(data, function(idx, seasonPass) {
             $("#seasonPasses tbody").append(
                 '<tr>' +
@@ -123,6 +150,39 @@ $(document).ready(function(){
                     '</tr>')
         })
     })
+}
+
+$(document).ready(function() {
+    loadRecordings()
+    loadSeasonPasses()
 })
+
+$("#searchButton").click(function() {
+    var term = $("#searchText").val().trim()
+    if (term.length < 2) {
+        alert('Minimum search length is 2')
+    } else {
+        $("#searchResults tbody").html('<tr><td class="searchResult italic">searching...</td></tr>')
+        $.getJSON("search", { 'term': term }, function(data, status) {
+            if (data.length == 0) {
+                $("#searchResults tbody").html('<tr><td class="searchResult italic">no programs found</td></tr>')
+            } else {
+                $("#searchResults tbody").html("")
+                $.each(data, function(idx, result) {
+                    $("#searchResults tbody").append(
+                        '<tr>' +
+                            '<td class="searchResult bold">' + result.title + '</td>' +
+                            '<td class="searchResult leftSpace"><input class="addSeasonPassButton" type="button" onclick="addSeasonPass(\'' + result.title + '\')" value="Add"/></td>' +
+                            '</tr>')
+                })
+            }
+        })
+    }
+})
+
+$("#searchText").keyup(function(event) {
+    if (event.keyCode == 13) $("#searchButton").click()
+});
+
 </script>
 </html>

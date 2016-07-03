@@ -36,6 +36,16 @@ def season_passes(request):
     request.db.execute('SELECT * FROM season_pass ORDER BY priority ASC, created_at ASC')
     return request.db.fetchall()
 
+@view_config(route_name='add_season_pass', renderer='json')
+def add_season_pass(request):
+    title = request.GET['title']
+    new_only = request.GET['new_only'] if 'new_only' in request.GET else True
+    request.db.execute('INSERT INTO season_pass (program_title, new_only) VALUES (%s, %s)', [title, new_only])
+    request.db.execute('SELECT * FROM season_pass WHERE program_title = %s', [title])
+    return request.db.fetchone()
+
 @view_config(route_name='search', renderer='json')
 def search(request):
-    return []
+    term = request.GET['term']
+    request.db.execute('SELECT DISTINCT program.title FROM program JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id WHERE station.active AND plainto_tsquery(\'english\', %s) @@ program.tsv ORDER BY program.title', [term])
+    return request.db.fetchall()
