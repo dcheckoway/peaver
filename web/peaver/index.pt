@@ -56,6 +56,10 @@ td.searchResult {
     background: #0F0;
     border: 1px solid #888;
 }
+.addSeasonPassButton {
+    padding-left: 0px;
+    padding-right: 0px;
+}
 </style>
 <script src="https://code.jquery.com/jquery-3.0.0.min.js"
         integrity="sha256-JmvOoLtYsmqlsWxa7mDSLMwa6dZ9rrIdtrrVYRnDRH0="
@@ -171,8 +175,8 @@ $("#searchButton").click(function() {
                 $.each(data, function(idx, result) {
                     $("#searchResults tbody").append(
                         '<tr>' +
-                            '<td class="searchResult bold">' + result.title + '</td>' +
                             '<td class="searchResult leftSpace"><input class="addSeasonPassButton" type="button" onclick="addSeasonPass(\'' + result.title + '\')" value="Add"/></td>' +
+                            '<td class="searchResult bold">' + result.title + '</td>' +
                             '</tr>')
                 })
             }
