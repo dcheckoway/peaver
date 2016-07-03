@@ -1,6 +1,7 @@
 import sys
 sys.path.append('..')
 from lib.database import DatabaseClient
+from lib.dvr import DVR
 
 import datetime
 from pyramid.config import Configurator
@@ -11,10 +12,16 @@ def main(global_config, **settings):
     config.include('pyramid_chameleon')
 
     config.registry.db = DatabaseClient()
+    config.registry.dvr = DVR()
+    
     def db(request):
         return config.registry.db
 
+    def dvr(request):
+        return config.registry.dvr
+
     config.add_request_method(db, 'db', reify=True)
+    config.add_request_method(dvr, 'dvr', reify=True)
     
     json_renderer = JSON()
     def datetime_adapter(obj, request):
@@ -25,6 +32,7 @@ def main(global_config, **settings):
     
     config.add_route('index', '/')
     config.add_route('recordings', 'recordings')
+    config.add_route('delete_recording', 'delete_recording')
     config.add_route('season_passes', 'season_passes')
     config.add_route('add_season_pass', 'add_season_pass')
     config.add_route('search', 'search')

@@ -56,7 +56,7 @@ td.searchResult {
     background: #0F0;
     border: 1px solid #888;
 }
-.addSeasonPassButton {
+.noHorizPadding {
     padding-left: 0px;
     padding-right: 0px;
 }
@@ -115,14 +115,28 @@ function shortDesc(recording) {
 }
 
 function addSeasonPass(title) {
-    $.getJSON("add_season_pass", { 'title': title })
-        .done(function(seasonPass) {
-            alert('Added season pass for ' + seasonPass.program_title + '.')
-            loadSeasonPasses()
+    if (confirm('Add a season pass for ' + title + '?')) {
+        $.getJSON("add_season_pass", { 'title': title })
+            .done(function(seasonPass) {
+                alert('Added season pass for ' + seasonPass.program_title + '.')
+                loadSeasonPasses()
+            })
+            .fail(function(jqxhr, status, error) {
+                alert('Failed to add season pass, status=' + status + ', error=' + error)
+            })
+    }
+}
+
+function deleteRecording(id, title) {
+    if (confirm('Delete recording of ' + title + '?')) {
+        $.getJSON("delete_recording", { 'id': id }, function(data, status) {
+            if (data.deleted) {
+                loadRecordings()
+            } else {
+                alert('Failed to delete recording: ' + data.error)
+            }
         })
-        .fail(function(jqxhr, status, error) {
-            alert('Failed to add season pass, status=' + status + ', error=' + error)
-        })
+    }
 }
 
 function loadRecordings() {
@@ -137,6 +151,7 @@ function loadRecordings() {
                     '<td class="recording bold">' + recording.program.title + '</td>' +
                     '<td class="recording"><div class="' + (recording.new ? "newMark" : "repeatMark") + '"/></td>' +
                     '<td class="recording">' + shortDesc(recording) + '</td>' +
+                    (recording.status == 'ready' ? '<td class="recording"><input class="noHorizPadding" type="button" onclick="deleteRecording(' + recording.id + ',\'' + recording.program.title + '\')" value="Delete"/></td>' : '') +
                     '</tr>')
             $(".newMark").html('<span>NEW</span>')
         })
@@ -175,7 +190,7 @@ $("#searchButton").click(function() {
                 $.each(data, function(idx, result) {
                     $("#searchResults tbody").append(
                         '<tr>' +
-                            '<td class="searchResult leftSpace"><input class="addSeasonPassButton" type="button" onclick="addSeasonPass(\'' + result.title + '\')" value="Add"/></td>' +
+                            '<td class="searchResult leftSpace"><input class="noHorizPadding" type="button" onclick="addSeasonPass(\'' + result.title + '\')" value="Add"/></td>' +
                             '<td class="searchResult bold">' + result.title + '</td>' +
                             '</tr>')
                 })

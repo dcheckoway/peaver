@@ -31,6 +31,15 @@ def recordings(request):
         }
     } for row in request.db.fetchall()]
 
+@view_config(route_name='delete_recording', renderer='json')
+def delete_recording(request):
+    id = request.GET['id']
+    try:
+        request.dvr.delete_recording(id)
+        return {'deleted': id}
+    except Exception as e:
+        return {'error': str(e)}
+
 @view_config(route_name='season_passes', renderer='json')
 def season_passes(request):
     request.db.execute('SELECT * FROM season_pass ORDER BY priority ASC, created_at ASC')

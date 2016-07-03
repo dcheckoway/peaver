@@ -2,6 +2,7 @@ import logging, os, subprocess
 from config import Config
 from database import DatabaseClient
 from datetime import datetime, timedelta
+from plex import PlexClient
 from threading import Timer
 
 logger = logging.getLogger(__name__)
@@ -13,21 +14,20 @@ logger.addHandler(ch)
 
 class DVR(DatabaseClient):
     def __init__(self, config = None, media_extension = 'm4v'):
-        if not config:
-            config = Config().load()
+        self.config = config if config else Config().load()
         self.media_extension = media_extension
-        self.media_dir = config.get('plex', 'media_dir')
-        self.plex_section_id = config.get('plex', 'section_id')
-        self.hdhr_ip = config.get('hdhomerun', 'ip')
-        self.hdhr_port = config.get('hdhomerun', 'recording_port')
-        self.hdhr_profile = config.get('hdhomerun', 'transcode_profile')
-        self.start_early_sec = int(config.get('dvr', 'start_early_sec'))
-        self.end_late_sec = int(config.get('dvr', 'end_late_sec'))
-        self.recording_script_dir = config.get('dvr', 'recording_script_dir')
-        self.recording_log_file = config.get('dvr', 'recording_log_file')
+        self.media_dir = self.config.get('plex', 'media_dir')
+        self.plex_section_id = self.config.get('plex', 'section_id')
+        self.hdhr_ip = self.config.get('hdhomerun', 'ip')
+        self.hdhr_port = self.config.get('hdhomerun', 'recording_port')
+        self.hdhr_profile = self.config.get('hdhomerun', 'transcode_profile')
+        self.start_early_sec = int(self.config.get('dvr', 'start_early_sec'))
+        self.end_late_sec = int(self.config.get('dvr', 'end_late_sec'))
+        self.recording_script_dir = self.config.get('dvr', 'recording_script_dir')
+        self.recording_log_file = self.config.get('dvr', 'recording_log_file')
         self.set_recording_status_script_path = os.path.realpath(os.path.join(os.path.dirname(__file__), '../set-recording-status'))
         self.refresh_plex_section_script_path = os.path.realpath(os.path.join(os.path.dirname(__file__), '../refresh-plex-section'))
-        DatabaseClient.__init__(self, config)
+        DatabaseClient.__init__(self, self.config)
 
     def dest_file(self, program, air_date_time):
         title = program.title.replace(os.sep, '-')
@@ -93,3 +93,17 @@ class DVR(DatabaseClient):
         logger.info('Updating recording {0} status to {1}'.format(recording_id, status))
         self.execute('UPDATE recording SET status = %s WHERE id = %s', [status, recording_id])
         return self.rowcount() == 1
+
+    def delete_recording(self, recording_id):
+        self.execute('SELECT * FROM recording WHERE id = %s', [recording_id])
+        rec = self.fetchone()
+        if rec:
+            logger.info('Deleting recording {0}, media_path={1}'.format(rec.id, rec.media_path))
+            if os.path.isfile(rec.media_path):
+                os.remove(rec.media_path)
+            else:
+                logger.warning('Recording file not found: {0}'.format(rec.media_path))
+            self.execute('DELETE FROM recording WHERE id = %s', [recording_id])
+            PlexClient(config = self.config).refresh_section(self.plex_section_id)
+        else:
+            raise Exception('Recording {0} not found'.format(id))

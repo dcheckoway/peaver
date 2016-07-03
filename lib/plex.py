@@ -21,8 +21,12 @@ class PlexRefreshError(PlexException):
         PlexException.__init__(self, 'Plex refresh of section {0} failed (status code {1})'.format(section_id, status_code))
 
 class PlexClient():
-    def __init__(self, base_url):
-        self.base_url = base_url
+    def __init__(self, base_url = None, config = None):
+        if base_url:
+            self.base_url = base_url
+        else:
+            config = config if config else Config().load()
+            self.base_url = config.get('plex', 'base_url')
 
     def library_sections(self):
         try:
