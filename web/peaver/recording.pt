@@ -1,0 +1,25 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peaver: ${program.title}</title>
+<script src="http://stevenlevithan.com/assets/misc/date.format.js"></script>
+</head>
+<style type="text/css">
+h4 {
+    font-family: Arial;
+}
+</style>
+<body>
+
+<h4>${program.title}</h4>
+
+
+
+${recording.air_date_time}
+
+${station.affiliate}
+
+<a href="../">Home</a>
+
+</body>
+</html>
