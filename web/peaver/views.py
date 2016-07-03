@@ -6,7 +6,7 @@ def index(request):
 
 @view_config(route_name='recordings', renderer='json')
 def recordings(request):
-    request.db.execute('select recording.id as recording_id, recording.status as recording_status, recording.season_pass_id, station_program.air_date_time, station_program.duration, station_program.new, program.title, program.episode_title, program.description, program.long_description, program.cast_list, program.original_air_date, program.season, program.episode, station.name as station_name, station.affiliate, lineup_station.atsc from recording join station_program on station_program.id = recording.station_program_id join program on program.id = station_program.program_id join station on station.id = station_program.station_id join lineup_station on lineup_station.station_id = station.id order by station_program.air_date_time')
+    request.db.execute('SELECT recording.id AS recording_id, recording.status AS recording_status, recording.season_pass_id, station_program.air_date_time, station_program.duration, station_program.new, program.title, program.episode_title, program.description, program.long_description, program.cast_list, program.original_air_date, program.season, program.episode, station.name AS station_name, station.affiliate, lineup_station.atsc FROM recording JOIN station_program ON station_program.id = recording.station_program_id JOIN program ON program.id = station_program.program_id JOIN station ON station.id = station_program.station_id JOIN lineup_station ON lineup_station.station_id = station.id ORDER BY station_program.air_date_time')
     return [{
         'id': row.recording_id,
         'status': row.recording_status,
@@ -30,3 +30,12 @@ def recordings(request):
             'atsc': row.atsc
         }
     } for row in request.db.fetchall()]
+
+@view_config(route_name='season_passes', renderer='json')
+def season_passes(request):
+    request.db.execute('SELECT * FROM season_pass ORDER BY priority ASC, created_at ASC')
+    return request.db.fetchall()
+
+@view_config(route_name='search', renderer='json')
+def search(request):
+    return []

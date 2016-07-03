@@ -9,10 +9,22 @@
 .bgRed { background-color: red }
 .bgYellow { background-color: yellow }
 .bgGreen { background-color: green }
+.leftSpace { padding-left: 5px; }
+h4 {
+    font-family: Arial;
+}
 table#recordings {
     border: 0;
 }
 td.recording {
+    font-family: Arial;
+    font-size: 12px;
+    border: 0;
+}
+table#seasonPasses {
+    border: 0;
+}
+td.seasonPass {
     font-family: Arial;
     font-size: 12px;
     border: 0;
@@ -44,7 +56,17 @@ td.recording {
 		crossorigin="anonymous"></script>
 <script src="http://stevenlevithan.com/assets/misc/date.format.js"></script>
 <body>
+
+<h4>Recordings</h4>
 <table id="recordings"><tbody/></table>
+
+<h4>Season Passes</h4>
+<table id="seasonPasses"><tbody/></table>
+
+<h4>Program Search</h4>
+<input id="searchText" type="text" placeholder=""/>
+<input id="searchButton" type="button" value="Go"/>
+
 </body>
 <script>
 function recordingClass(recordingStatus) {
@@ -90,6 +112,15 @@ $(document).ready(function(){
                     '<td class="recording">' + shortDesc(recording) + '</td>' +
                     '</tr>')
             $(".newMark").html('<span>NEW</span>')
+        })
+    })
+    $.getJSON("season_passes", function(data, status) {
+        $.each(data, function(idx, seasonPass) {
+            $("#seasonPasses tbody").append(
+                '<tr>' +
+                    '<td class="seasonPass bold">' + seasonPass.program_title + '</td>' +
+                    '<td class="seasonPass leftSpace">' + (seasonPass.new_only ? 'New Only' : 'New &amp; Repeat') + '</td>' +
+                    '</tr>')
         })
     })
 })
