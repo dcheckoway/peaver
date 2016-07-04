@@ -140,22 +140,38 @@ function addSeasonPass(title, newOnly) {
     }
 }
 
-function deleteRecording(id, title) {
-    if (confirm('Delete recording of ' + title + '?')) {
-        $.getJSON("delete_recording", { 'id': id }, function(data, status) {
-            if (data.deleted) {
-                loadRecordings()
+function skipRecording(id, title) {
+    if (confirm('Skip recording of ' + title + '?')) {
+        $.getJSON("skip_recording/" + id, function(data, status) {
+            if (data.error) {
+                alert('Failed to skip recording: ' + data.error)
             } else {
-                alert('Failed to delete recording: ' + data.error)
+                loadRecordings()
             }
         })
     }
 }
 
+function deleteRecording(id, title) {
+    if (confirm('Delete recording of ' + title + '?')) {
+        $.getJSON("delete_recording/" + id, function(data, status) {
+            if (data.error) {
+                alert('Failed to delete recording: ' + data.error)
+            } else {
+                loadRecordings()
+            }
+        })
+    }
+}
+
+function isNotSkipped(row) {
+    return row.recording.status != 'skipped'
+}
+
 function loadRecordings() {
     $.getJSON("recordings", function(data, status) {
         $("#recordings tbody").html("")
-        $.each(data, function(idx, row) {
+        $.each(data.filter(isNotSkipped), function(idx, row) {
             var recording = row.recording
             var program = row.program
             $("#recordings tbody").append(
@@ -168,6 +184,7 @@ function loadRecordings() {
                     '<td class="recording">' + shortDesc(program) + '</td>' +
                     '<td class="recording"><a href="recording/' + recording.id + '"><div class="infoCircle bold">i</div></a>' +
                     (recording.status == 'ready' ? '<td class="recording"><input class="noHorizPadding" type="button" onclick="deleteRecording(' + recording.id + ',\'' + program.title + '\')" value="Delete"/></td>' : '') +
+                    ((recording.status == 'pending' || recording.status == 'scheduled') ? '<td class="recording"><input class="noHorizPadding" type="button" onclick="skipRecording(' + recording.id + ',\'' + program.title + '\')" value="Skip"/></td>' : '') +
                     '</tr>')
             $(".newMark").html('<span>NEW</span>')
         })

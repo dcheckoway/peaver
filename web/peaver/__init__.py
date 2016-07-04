@@ -32,8 +32,9 @@ def main(global_config, **settings):
     
     config.add_route('index', '/')
     config.add_route('recordings', 'recordings')
-    config.add_route('delete_recording', 'delete_recording')
     config.add_route('recording', 'recording/{id}')
+    config.add_route('delete_recording', 'delete_recording/{id}')
+    config.add_route('skip_recording', 'skip_recording/{id}')
     config.add_route('season_passes', 'season_passes')
     config.add_route('add_season_pass', 'add_season_pass')
     config.add_route('search', 'search')

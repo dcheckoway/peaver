@@ -71,6 +71,7 @@ class DVR(DatabaseClient):
             print >> f, 'exec > {0} 2>&1'.format(self.recording_log_file)
             print >> f, '{0} {1} recording'.format(self.set_recording_status_script_path, recording_id)
             print >> f, 'mkdir -p \'{0}\''.format(media_path_dir.replace('\'', '\'\\\'\''))
+            # TODO: determine an available tuner dynamically
             print >> f, 'curl -s \'{0}\' > \'{1}\''.format(capture_url, media_path.replace('\'', '\'\\\'\''))
             print >> f, '{0} {1}'.format(self.refresh_plex_section_script_path, self.plex_section_id)
             print >> f, '{0} {1} ready'.format(self.set_recording_status_script_path, recording_id)
@@ -94,6 +95,14 @@ class DVR(DatabaseClient):
         logger.info('Updating recording {0} status to {1}'.format(recording_id, status))
         self.execute('UPDATE recording SET status = %s WHERE id = %s', [status, recording_id])
         return self.rowcount() == 1
+
+    def skip_recording(self, recording_id):
+        self.execute('SELECT * FROM recording WHERE id = %s', [recording_id])
+        rec = self.fetchone()
+        if rec:
+            return self.set_recording_status(recording_id, 'skipped')
+        else:
+            raise Exception('Recording {0} not found'.format(id))
 
     def delete_recording(self, recording_id):
         self.execute('SELECT * FROM recording WHERE id = %s', [recording_id])
@@ -119,8 +128,11 @@ class DVR(DatabaseClient):
             return {'error': str(e)}
 
     def reconcile_season_pass_recordings(self):
+        logger.info('Deleting skipped recordings for past programs')
+        self.execute('DELETE FROM recording USING station_program WHERE recording.status = \'skipped\' AND station_program.id = recording.station_program_id AND station_program.air_date_time < CURRENT_TIMESTAMP')
+        logger.info('Rows deleted: {0}'.format(self.rowcount()))
         logger.info('Reconciling season pass recordings')
-        self.execute('DELETE FROM recording USING season_pass, station_program, program WHERE recording.status IN (\'pending\',\'scheduled\') AND season_pass.id = recording.season_pass_id AND station_program.id = recording.station_program_id AND program.id = station_program.program_id AND program.title != season_pass.program_title')
+        self.execute('DELETE FROM recording USING season_pass, station_program, program WHERE recording.status NOT IN (\'recording\',\'ready\') AND season_pass.id = recording.season_pass_id AND station_program.id = recording.station_program_id AND program.id = station_program.program_id AND program.title != season_pass.program_title')
         logger.info('Rows deleted: {0}'.format(self.rowcount()))
         self.execute('SELECT season_pass.id as season_pass_id, station_program.id as station_program_id, station_program.air_date_time, station_program.program_id FROM season_pass JOIN program ON program.title = season_pass.program_title JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id WHERE station.active AND station_program.air_date_time > CURRENT_TIMESTAMP AND (station_program.new OR NOT season_pass.new_only) AND NOT EXISTS (SELECT 1 FROM recording WHERE station_program_id = station_program.id) ORDER BY station_program.air_date_time, season_pass.priority, season_pass.id')
         for row in self.fetchall():

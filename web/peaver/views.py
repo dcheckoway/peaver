@@ -11,10 +11,19 @@ def recordings(request):
 
 @view_config(route_name='delete_recording', renderer='json')
 def delete_recording(request):
-    id = request.GET['id']
+    id = request.matchdict['id']
     try:
         request.dvr.delete_recording(id)
         return {'deleted': id}
+    except Exception as e:
+        return {'error': str(e)}
+
+@view_config(route_name='skip_recording', renderer='json')
+def skip_recording(request):
+    id = request.matchdict['id']
+    try:
+        request.dvr.skip_recording(id)
+        return {'skipped': id}
     except Exception as e:
         return {'error': str(e)}
 
