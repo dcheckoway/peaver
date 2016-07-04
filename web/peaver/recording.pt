@@ -5,21 +5,34 @@
 <script src="http://stevenlevithan.com/assets/misc/date.format.js"></script>
 </head>
 <style type="text/css">
-h4 {
+body {
     font-family: Arial;
+    font-size: 12px;
+}
+.programTitle {
+    font-size: 20px;
+    font-weight: bold;
+}
+.episodeTitle {
+    font-size: 16px;
+    font-weight: bold;
+    font-style: italic;
+}
+.description {
+    font-size: 14px;
+    padding-top: 5px;
+    padding-bottom: 5px;
 }
 </style>
 <body>
-
-<h4>${program.title}</h4>
-
-
-
-${recording.air_date_time}
-
-${station.affiliate}
-
+<div class="programTitle">${program.title}</div>
+<div class="episodeTitle" tal:condition="program.episode_title">${program.episode_title}</div>
+<div class="description">${program.long_description}</div>
+<div class="cast" tal:condition="program.cast_list">Cast: ${program.cast_list}</div>
+<div class="seasonEpisode" tal:condition="program.season and program.episode">Season ${program.season}, Episode ${program.episode}</div>
+<div class="airInfo">Airs: ${recording.air_date_time} on ${station.affiliate} ${station.atsc}</div>
+<div class="originalAirDate" tal:condition="program.original_air_date">Originally Aired: ${program.original_air_date}</div>
+<div class="duration">Duration: ${recording.duration_as_string}</div>
 <a href="../">Home</a>
-
 </body>
 </html>

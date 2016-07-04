@@ -1,3 +1,4 @@
+import datetime
 from pyramid.view import view_config
 
 @view_config(route_name='index', renderer='index.pt')
@@ -34,6 +35,12 @@ def recording(request):
     row = request.db.fetchone()
     return recording_data(row) if row else {'error': 'Recording {0} not found'.format(recording_id)}
 
+def season_episode(season, episode):
+    if season and episode:
+        return 'S{0:02d}E{1:02d}'.format(season, episode)
+    else:
+        return None
+
 def recording_data(row):
     return {
         'recording': {
@@ -42,6 +49,7 @@ def recording_data(row):
             'season_pass_id': row.season_pass_id,
             'air_date_time': row.air_date_time,
             'duration': row.duration,
+            'duration_as_string': str(datetime.timedelta(seconds = row.duration)),
             'new': row.new
         },
         'program': {
@@ -49,6 +57,7 @@ def recording_data(row):
             'title': row.title,
             'season': row.season,
             'episode': row.episode,
+            'season_episode': season_episode(row.season, row.episode),
             'episode_title': row.episode_title,
             'description': row.description,
             'long_description': row.long_description,

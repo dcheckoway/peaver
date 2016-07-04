@@ -104,22 +104,9 @@ function recordingClass(recordingStatus) {
     }
 }
 
-function seasonEp(program) {
-    if (program.season && program.episode) {
-        return 'S' + twoDigit(program.season) + 'E' + twoDigit(program.episode)
-    } else {
-        return null
-    }
-}
-
-function twoDigit(v) {
-    return v < 10 ? ('0' + v) : v
-}
-
 function shortDesc(program) {
-    se = seasonEp(program)
-    if (se) {
-        return se
+    if (program.season_episode) {
+        return program.season_episode
     } else if (program.episode_title) {
         return program.episode_title
     } else {
