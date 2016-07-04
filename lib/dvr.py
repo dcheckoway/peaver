@@ -48,7 +48,7 @@ class DVR(DatabaseClient):
     def scan_for_upcoming_recordings(self):
         threshold = '10 minutes'
         logger.info('Scanning for upcoming recordings, threshold: {0}'.format(threshold))
-        self.execute('SELECT recording.id as recording_id, lineup_station.atsc, station_program.air_date_time, station_program.duration, recording.media_path FROM recording JOIN station_program ON station_program.id = recording.station_program_id JOIN lineup_station ON lineup_station.station_id = station_program.station_id WHERE recording.status = \'pending\' AND station_program.air_date_time <= (CURRENT_TIMESTAMP + INTERVAL \'{0}\') ORDER BY station_program.air_date_time'.format(threshold))
+        self.execute('SELECT recording.id as recording_id, lineup_station.atsc, station_program.air_date_time, station_program.duration, recording.media_path FROM recording JOIN station_program ON station_program.id = recording.station_program_id JOIN lineup_station ON lineup_station.station_id = station_program.station_id WHERE recording.status = \'pending\' AND station_program.air_date_time <= (CURRENT_TIMESTAMP + INTERVAL \'{0}\') AND station_program.air_date_time >= CURRENT_TIMESTAMP ORDER BY station_program.air_date_time'.format(threshold))
         for row in self.fetchall():
             start_time = row.air_date_time - timedelta(seconds = self.start_early_sec)
             duration_sec = self.start_early_sec + row.duration + self.end_late_sec
@@ -157,6 +157,10 @@ class DVR(DatabaseClient):
                                  [station_program_id, season_pass_id, media_path])
 
     def purge_old_data(self):
+        logger.info('Purging stale recordings')
+        self.execute('DELETE FROM recording USING station_program WHERE station_program.id = recording.station_program_id AND station_program.air_date_time + (station_program.duration||\' seconds\')::interval < CURRENT_TIMESTAMP AND recording.status IN (\'pending\',\'scheduled\')')
+        logger.info('Rows deleted: {0}'.format(self.rowcount()))
+
         logger.info('Purging old station_program entries')
         self.execute('DELETE FROM station_program WHERE air_date_time + (duration||\' seconds\')::interval < CURRENT_TIMESTAMP AND NOT EXISTS (SELECT 1 FROM recording WHERE station_program_id = station_program.id)')
         logger.info('Rows deleted: {0}'.format(self.rowcount()))
