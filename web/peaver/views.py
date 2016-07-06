@@ -28,6 +28,15 @@ def skip_recording(request):
     except Exception as e:
         return {'error': str(e)}
 
+@view_config(route_name='enable_recording', renderer='json')
+def enable_recording(request):
+    id = request.matchdict['id']
+    try:
+        request.dvr.enable_recording(id)
+        return {'enabled': id}
+    except Exception as e:
+        return {'error': str(e)}
+
 @view_config(route_name='recording', renderer='recording.pt')
 def recording(request):
     recording_id = request.matchdict['id']
