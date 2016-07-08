@@ -180,10 +180,10 @@ function loadRecordings() {
                     '<td class="recording"><div class="' + recordingClass(recording.status) + '"/></td>' +
                     '<td class="recording center">' + dateFormat(recording.air_date_time, "m/d") + '</td>' +
                     '<td class="recording center">' + dateFormat(recording.air_date_time, "h:MMt") + '</td>' +
+                    '<td class="recording"><a href="recording/' + recording.id + '"><div class="infoCircle bold">i</div></a>' +
                     '<td class="recording bold">' + program.title + '</td>' +
                     '<td class="recording"><div class="' + (recording.new ? "newMark" : "repeatMark") + '"/></td>' +
                     '<td class="recording">' + shortDesc(program) + '</td>' +
-                    '<td class="recording"><a href="recording/' + recording.id + '"><div class="infoCircle bold">i</div></a>' +
                     (recording.status == 'ready' ? '<td class="recording"><input class="noHorizPadding" type="button" onclick="deleteRecording(' + recording.id + ',\'' + program.title + '\')" value="Delete"/></td>' : '') +
                     ((recording.status == 'pending' || recording.status == 'scheduled') ? '<td class="recording"><input class="noHorizPadding" type="button" onclick="skipRecording(' + recording.id + ',\'' + program.title + '\')" value="Skip"/></td>' : '') +
                     ((recording.status == 'conflict') ? '<td class="recording"><input class="noHorizPadding" type="button" onclick="enableRecording(' + recording.id + ',\'' + program.title + '\')" value="Enable"/></td>' : '') +
