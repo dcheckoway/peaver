@@ -84,7 +84,7 @@ CREATE TABLE season_pass (
 );
 CREATE UNIQUE INDEX season_pass_unq ON season_pass (program_title);
 
-CREATE TYPE recording_status AS ENUM ('pending', 'scheduled', 'recording', 'ready');
+CREATE TYPE recording_status AS ENUM ('pending', 'conflict', 'skipped', 'scheduled', 'recording', 'ready');
 
 CREATE TABLE recording (
   id SERIAL PRIMARY KEY,

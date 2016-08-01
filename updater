@@ -2,6 +2,7 @@
 
 import argparse
 from lib.config import Config
+from lib.dvr import DVR
 from lib.schedules import SchedulesDirectAPI
 from lib.updater import Updater
 
@@ -14,10 +15,11 @@ args = parser.parse_args()
 
 config = Config()
 config.load()
-api = SchedulesDirectAPI(config)
-updater = Updater(api, config)
+
 if args.schedules:
-    updater.update_schedules()
+    Updater(SchedulesDirectAPI(config), config).update_schedules()
+
+dvr = DVR(config)
 if args.reconcile:
-    updater.reconcile_season_pass_recordings()
-updater.purge_old_data()
+    dvr.reconcile_season_pass_recordings()
+dvr.purge_old_data()

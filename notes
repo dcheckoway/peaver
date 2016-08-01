@@ -1,13 +1,4 @@
-- skip/recording override
-- delete recordings (delete media file + Plex rescan)
-- add & remove season pass (reconcile recordings)
-
-
-- show recordings:
-select recording.id, recording.status, station_program.air_date_time, station_program.duration, recording.media_path from recording join station_program on station_program.id = recording.station_program_id order by station_program.air_date_time;
-
-https://docs.python.org/2/library/threading.html#timer-objects
-
+- ad-hoc recordings (by program search or by time)
 - setup:
   - mark active stations
   - setup plex station
@@ -28,21 +19,6 @@ SELECT DISTINCT program.title FROM program JOIN station_program ON station_progr
 
 -- search step 2: find air times & details for a given program title
 SELECT station_program.id, station_program.air_date_time, station_program.new, program.long_description, program.cast_list, program.venue, program.teams, program.season, program.episode, lineup_station.channel, lineup_station.atsc, station.affiliate, station.name, station.city FROM program JOIN station_program ON station_program.program_id = program.id JOIN station ON station.id = station_program.station_id JOIN lineup_station ON lineup_station.station_id = station.id WHERE station.active AND program.title = 'Shark Tank' AND station_program.air_date_time > CURRENT_TIMESTAMP ORDER BY station_program.air_date_time;
-
-
--- season pass upcoming recording scheduler
-SELECT season_pass.id as season_pass_id, program.title, station_program.id as station_program_id, station_program.air_date_time
-FROM season_pass
-JOIN program ON program.title = season_pass.program_title
-JOIN station_program ON station_program.program_id = program.id
-JOIN station ON station.id = station_program.station_id
-WHERE station.active
-AND station_program.air_date_time > CURRENT_TIMESTAMP
-ORDER BY station_program.air_date_time;
-
--- step 3: set it up to record
-- one time (by station_program) or season pass (by title)
-  - detect existing season pass
 
 
 47304|WLEXDT|NBC|39|18.1

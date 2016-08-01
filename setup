@@ -29,7 +29,7 @@ hdhr_transcode_profile = input_with_default('HDHomeRun transcode profile', defau
 default_plex_base_url = 'http://localhost:32400'
 plex_base_url = input_with_default('Plex Base URL', default_plex_base_url)
 
-sections = PlexClient(plex_base_url).library_sections()
+sections = PlexClient(base_url = plex_base_url).library_sections()
 while True:
     print 'Available Plex sections:'
     for id, section in sorted(sections.iteritems()):
@@ -53,9 +53,10 @@ while not schedules_direct_password_digest:
 
 # Prompt for PostgreSQL connection config
 default_db_host = 'localhost'
+default_db_user = os.getenv('USER')
 default_db_name = 'peaver'
 db_host = input_with_default('Database host', default_db_host)
-db_user = raw_input('Database user: ')
+db_user = input_with_default('Database user', default_db_user)
 db_password = getpass.getpass('Database password: ')
 db_name = input_with_default('Database name', default_db_name)
 
@@ -63,7 +64,7 @@ db_name = input_with_default('Database name', default_db_name)
 default_start_early_sec = '30'
 default_end_late_sec = '60'
 default_recording_script_dir = '/tmp/peaver'
-default_recording_log_file = '/tmp/peaver/recordings.log'
+default_recording_log_file = os.path.realpath(os.path.join(os.path.dirname(__file__), 'logs/recordings.log'))
 start_early_sec = input_with_default('Start recordings early by (sec)', default_start_early_sec)
 end_late_sec = input_with_default('End recordings late by (sec)', default_end_late_sec)
 recording_script_dir = input_with_default('Recording script directory', default_recording_script_dir)

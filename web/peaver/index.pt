@@ -2,17 +2,39 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Peaver</title>
+<script src="//code.jquery.com/jquery-3.0.0.min.js"
+        integrity="sha256-JmvOoLtYsmqlsWxa7mDSLMwa6dZ9rrIdtrrVYRnDRH0="
+		crossorigin="anonymous"></script>
+<script src="http://stevenlevithan.com/assets/misc/date.format.js"></script>
 </head>
 <style type="text/css">
 .bold { font-weight: bold; }
+.italic { font-style: italic; }
 .center { text-align: center; }
 .bgRed { background-color: red }
 .bgYellow { background-color: yellow }
 .bgGreen { background-color: green }
+.leftSpace { padding-left: 5px; }
+h4 {
+    font-family: Arial;
+}
 table#recordings {
     border: 0;
 }
 td.recording {
+    font-family: Arial;
+    font-size: 12px;
+    border: 0;
+}
+table#seasonPasses {
+    border: 0;
+}
+td.seasonPass {
+    font-family: Arial;
+    font-size: 12px;
+    border: 0;
+}
+td.searchResult {
     font-family: Arial;
     font-size: 12px;
     border: 0;
@@ -38,13 +60,37 @@ td.recording {
     background: #0F0;
     border: 1px solid #888;
 }
+.infoCircle {
+    width: 14px;
+    height: 14px;
+    border-radius: 20px;
+    font-family: Arial;
+    font-size: 9px;
+    font-weight: bold;
+    color: #fff;
+    line-height: 14px;
+    text-align: center;
+    background: #00f;
+    border: 1px solid #888;
+}
+.noHorizPadding {
+    padding-left: 0px;
+    padding-right: 0px;
+}
 </style>
-<script src="https://code.jquery.com/jquery-3.0.0.min.js"
-        integrity="sha256-JmvOoLtYsmqlsWxa7mDSLMwa6dZ9rrIdtrrVYRnDRH0="
-		crossorigin="anonymous"></script>
-<script src="http://stevenlevithan.com/assets/misc/date.format.js"></script>
 <body>
+
+<h4>Recordings</h4>
 <table id="recordings"><tbody/></table>
+
+<h4>Season Passes</h4>
+<table id="seasonPasses"><tbody/></table>
+
+<h4>Add a Season Pass</h4>
+<input id="searchText" type="text" placeholder=""/>
+<input id="searchButton" type="button" value="Search"/>
+<table id="searchResults"><tbody/></table>
+
 </body>
 <script>
 function recordingClass(recordingStatus) {
@@ -53,45 +99,149 @@ function recordingClass(recordingStatus) {
         return 'circle bgGreen'
     case 'recording':
         return 'circle bgRed'
+    case 'conflict':
+        return 'circle bgYellow'
     default:
         return ''
     }
 }
-function seasonEp(recording) {
-    if (recording.program.season && recording.program.episode) {
-        return 'S' + twoDigit(recording.program.season) + 'E' + twoDigit(recording.program.episode)
-    } else {
-        return null
-    }
-}
-function twoDigit(v) {
-    return v < 10 ? ('0' + v) : v
-}
-function shortDesc(recording) {
-    se = seasonEp(recording)
-    if (se) {
-        return se
-    } else if (recording.program.episode_title) {
-        return recording.program.episode_title
+
+function shortDesc(program) {
+    if (program.season_episode) {
+        return program.season_episode
+    } else if (program.episode_title) {
+        return program.episode_title
     } else {
         return 'N/A'
     }
 }
-$(document).ready(function(){
+
+function addSeasonPass(title, newOnly) {
+    if (confirm('Add a season pass for ' + title + '?')) {
+        $.getJSON("add_season_pass", { 'title': title, 'new_only': newOnly }, function(data, status) {
+            if (data.error) {
+                alert('Failed to add season pass: ' + data.error)
+            } else {
+                loadSeasonPasses()
+                loadRecordings()
+            }
+        })
+    }
+}
+
+function skipRecording(id, title) {
+    if (confirm('Skip recording of ' + title + '?')) {
+        $.getJSON("skip_recording/" + id, function(data, status) {
+            if (data.error) {
+                alert('Failed to skip recording: ' + data.error)
+            } else {
+                loadRecordings()
+            }
+        })
+    }
+}
+
+function enableRecording(id, title) {
+    if (confirm('Enable recording of ' + title + '?')) {
+        $.getJSON("enable_recording/" + id, function(data, status) {
+            if (data.error) {
+                alert('Failed to enable recording: ' + data.error)
+            } else {
+                loadRecordings()
+            }
+        })
+    }
+}
+
+function deleteRecording(id, title) {
+    if (confirm('Delete recording of ' + title + '?')) {
+        $.getJSON("delete_recording/" + id, function(data, status) {
+            if (data.error) {
+                alert('Failed to delete recording: ' + data.error)
+            } else {
+                loadRecordings()
+            }
+        })
+    }
+}
+
+function isNotSkipped(row) {
+    return row.recording.status != 'skipped'
+}
+
+function loadRecordings() {
     $.getJSON("recordings", function(data, status) {
-        $.each(data, function(idx, recording) {
+        $("#recordings tbody").html("")
+        $.each(data.filter(isNotSkipped), function(idx, row) {
+            var recording = row.recording
+            var program = row.program
             $("#recordings tbody").append(
                 '<tr>' +
                     '<td class="recording"><div class="' + recordingClass(recording.status) + '"/></td>' +
                     '<td class="recording center">' + dateFormat(recording.air_date_time, "m/d") + '</td>' +
                     '<td class="recording center">' + dateFormat(recording.air_date_time, "h:MMt") + '</td>' +
-                    '<td class="recording bold">' + recording.program.title + '</td>' +
+                    '<td class="recording"><a href="recording/' + recording.id + '"><div class="infoCircle bold">i</div></a>' +
+                    '<td class="recording bold">' + program.title + '</td>' +
                     '<td class="recording"><div class="' + (recording.new ? "newMark" : "repeatMark") + '"/></td>' +
-                    '<td class="recording">' + shortDesc(recording) + '</td>' +
+                    '<td class="recording">' + shortDesc(program) + '</td>' +
+                    (recording.status == 'ready' ? '<td class="recording"><input class="noHorizPadding" type="button" onclick="deleteRecording(' + recording.id + ',\'' + program.title + '\')" value="Delete"/></td>' : '') +
+                    ((recording.status == 'pending' || recording.status == 'scheduled') ? '<td class="recording"><input class="noHorizPadding" type="button" onclick="skipRecording(' + recording.id + ',\'' + program.title + '\')" value="Skip"/></td>' : '') +
+                    ((recording.status == 'conflict') ? '<td class="recording"><input class="noHorizPadding" type="button" onclick="enableRecording(' + recording.id + ',\'' + program.title + '\')" value="Enable"/></td>' : '') +
                     '</tr>')
             $(".newMark").html('<span>NEW</span>')
         })
     })
+}
+
+function loadSeasonPasses() {
+    $.getJSON("season_passes", function(data, status) {
+        $("#seasonPasses tbody").html("")
+        $.each(data, function(idx, seasonPass) {
+            $("#seasonPasses tbody").append(
+                '<tr>' +
+                    '<td class="seasonPass bold">' + seasonPass.program_title + '</td>' +
+                    '<td class="seasonPass leftSpace">' + (seasonPass.new_only ? 'New Only' : 'New &amp; Repeat') + '</td>' +
+                    '</tr>')
+        })
+    })
+}
+
+function showRecordingInfo(id) {
+    $("#recordingDialog" + id).dialog("open")
+}
+
+$(document).ready(function() {
+    loadRecordings()
+    loadSeasonPasses()
 })
+
+$("#searchButton").click(function() {
+    var term = $("#searchText").val().trim()
+    if (term.length < 2) {
+        alert('Minimum search length is 2')
+    } else {
+        $("#searchResults tbody").html('<tr><td class="searchResult italic">searching...</td></tr>')
+        $.getJSON("search", { 'term': term }, function(data, status) {
+            if (data.length == 0) {
+                $("#searchResults tbody").html('<tr><td class="searchResult italic">no programs found</td></tr>')
+            } else {
+                $("#searchResults tbody").html("")
+                $.each(data, function(idx, result) {
+                    $("#searchResults tbody").append(
+                        '<tr>' +
+                            '<td class="searchResult leftSpace"><input class="noHorizPadding" type="button" onclick="addSeasonPass(\'' + result.title + '\',true)" value="New Only"/></td>' +
+                            '<td class="searchResult"><input class="noHorizPadding" type="button" onclick="addSeasonPass(\'' + result.title + '\',false)" value="All"/></td>' +
+                            '<td class="searchResult bold">' + result.title + '</td>' +
+                            '</tr>')
+                })
+            }
+        })
+    }
+})
+
+$("#searchText").keyup(function(event) {
+    if (event.keyCode == 13) $("#searchButton").click()
+});
+
 </script>
 </html>
