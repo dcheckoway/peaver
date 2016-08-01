@@ -61,8 +61,8 @@ db_password = getpass.getpass('Database password: ')
 db_name = input_with_default('Database name', default_db_name)
 
 # Prompt for DVR preferences
-default_start_early_sec = '30'
-default_end_late_sec = '60'
+default_start_early_sec = '0'
+default_end_late_sec = '30'
 default_recording_script_dir = '/tmp/peaver'
 default_recording_log_file = os.path.realpath(os.path.join(os.path.dirname(__file__), 'logs/recordings.log'))
 start_early_sec = input_with_default('Start recordings early by (sec)', default_start_early_sec)
