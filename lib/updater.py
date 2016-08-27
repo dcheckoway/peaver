@@ -104,7 +104,7 @@ class Updater(DatabaseClient):
             if 'teams' in p.eventDetails and len(p.eventDetails.teams) == 2:
                 team1 = p.eventDetails.teams[0]
                 team2 = p.eventDetails.teams[1]
-                teams = '{0} vs. {1}'.format(team1.name, team2.name) if 'isHome' in team1 else '{0} at {1}'.format(team1.name, team2.name)
+                teams = u'{0} vs. {1}'.format(team1.name, team2.name) if 'isHome' in team1 else u'{0} at {1}'.format(team1.name, team2.name)
             if 'gameDate' in p.eventDetails:
                 game_date = parse_date(p.eventDetails.gameDate)
         entity_type = p.entityType
